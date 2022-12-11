@@ -1,0 +1,19 @@
+[package]
+name = "hello-rust"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+reqwest = "^0.9.18"
+serde = "1.0.149"
+serde_json = "1.0"
+# nokhwa = {version = "0.9.4", features = ["input-msmf"]}
+# webrtc = "0.5.1"
+# tokio = { version = "1.15", features = ["full"] }
+# image = "^0.23"
+# openh264 = "0.3.1"
+
+
+
