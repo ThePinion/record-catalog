@@ -13,7 +13,7 @@ pub struct DiscogsSearchResultRelease {
 pub struct DiscogsSearchResultOther {
     id: i64,
     #[serde(rename = "type")]
-    result_type: String,
+    type_: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

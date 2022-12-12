@@ -1,6 +1,8 @@
 use std::io::Read;
 
-use crate::models::query::DiscogsSearchResponse;
+use serde::Deserialize;
+
+use super::models::{error::Result, query::DiscogsSearchResponse, record::Record};
 
 pub struct DiscogsClient {
     token: String,
@@ -12,14 +14,23 @@ impl DiscogsClient {
             token: token.to_string(),
         }
     }
-    pub fn query(self, query_: &str) -> DiscogsSearchResponse {
-        let mut res = reqwest::get(&format!(
+    fn discogs_request<T: for<'a> Deserialize<'a>>(url: &str) -> Result<T> {
+        let mut res = reqwest::get(url)?;
+        let mut body = String::new();
+        res.read_to_string(&mut body)?;
+        Ok(serde_json::from_str::<T>(&body)?)
+    }
+
+    pub fn query(self, query_: &str) -> Result<DiscogsSearchResponse> {
+        let url = format!(
             "https://api.discogs.com/database/search?q={}&token={}",
             query_, self.token
-        ))
-        .unwrap();
-        let mut body = String::new();
-        res.read_to_string(&mut body).unwrap();
-        serde_json::from_str::<DiscogsSearchResponse>(&body).unwrap()
+        );
+        Self::discogs_request(&url)
+    }
+
+    pub fn get_release(self, id: i64) -> Result<Record> {
+        let url = format!("https://api.discogs.com/releases/{}", id);
+        Self::discogs_request(&url)
     }
 }

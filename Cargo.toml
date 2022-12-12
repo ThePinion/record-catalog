@@ -9,6 +9,10 @@ edition = "2021"
 reqwest = "^0.9.18"
 serde = "1.0.149"
 serde_json = "1.0"
+tui = "0.19"
+crossterm = "0.25"
+tui-textarea = "*"
+strum = { version = "0.21", features = ["derive"] }
 # nokhwa = {version = "0.9.4", features = ["input-msmf"]}
 # webrtc = "0.5.1"
 # tokio = { version = "1.15", features = ["full"] }
