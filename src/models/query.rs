@@ -5,7 +5,7 @@ pub struct DiscogsSearchResultRelease {
     id: i64,
     #[serde(rename = "type")]
     result_type: String,
-    title: String,
+    pub title: String,
     format: Vec<String>,
 }
 

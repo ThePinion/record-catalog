@@ -21,7 +21,7 @@ impl DiscogsClient {
         Ok(serde_json::from_str::<T>(&body)?)
     }
 
-    pub fn query(self, query_: &str) -> Result<DiscogsSearchResponse> {
+    pub fn query(&self, query_: &str) -> Result<DiscogsSearchResponse> {
         let url = format!(
             "https://api.discogs.com/database/search?q={}&token={}",
             query_, self.token
