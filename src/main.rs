@@ -3,7 +3,10 @@ mod gui;
 mod inputer;
 mod models;
 use inputer::inputer::InputReceiver;
-use models::{app::App, error::Result};
+use models::{
+    app::{App, Navigation},
+    error::Result,
+};
 
 fn main() -> Result<()> {
     let receiver = inputer::inputer::start();
@@ -14,9 +17,9 @@ fn main() -> Result<()> {
 
     loop {
         app.render(&mut terminal)?;
-        match app.receive_input(receiver.recv()?)? {
-            false => break,
-            true => (),
+        match app.input(receiver.recv()?)? {
+            Navigation::Quit => break,
+            _ => {}
         }
     }
 

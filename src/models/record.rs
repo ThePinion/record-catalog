@@ -1,47 +1,47 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug)]
-struct Format {
-    name: String,
+#[derive(Clone, Serialize, Deserialize, Debug)]
+pub struct Format {
+    pub name: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-struct Label {
-    name: String,
-    catno: String,
+#[derive(Clone, Serialize, Deserialize, Debug)]
+pub struct Label {
+    pub name: String,
+    pub catno: String,
 }
-#[derive(Serialize, Deserialize, Debug)]
-struct Identifier {
+#[derive(Clone, Serialize, Deserialize, Debug)]
+pub struct Identifier {
     #[serde(rename = "type")]
-    type_: String,
-    value: String,
+    pub type_: String,
+    pub value: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-struct Artist {
-    name: String,
-    id: i64,
+#[derive(Clone, Serialize, Deserialize, Debug)]
+pub struct Artist {
+    pub name: String,
+    pub id: i64,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-struct Track {
-    position: String,
-    type_: String,
-    title: String,
-    duration: String,
-    sub_tracks: Option<Vec<Track>>,
+#[derive(Clone, Serialize, Deserialize, Debug)]
+pub struct Track {
+    pub position: String,
+    pub type_: String,
+    pub title: String,
+    pub duration: String,
+    pub sub_tracks: Option<Vec<Track>>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Record {
-    id: i64,
-    year: i32,
-    title: String,
-    formats: Vec<Format>,
-    artists: Vec<Artist>,
-    labels: Vec<Label>,
-    identifiers: Vec<Identifier>,
-    genres: Vec<String>,
-    styles: Vec<String>,
-    tracklist: Vec<Track>,
+    pub id: i64,
+    pub year: i32,
+    pub title: String,
+    pub formats: Vec<Format>,
+    pub artists: Vec<Artist>,
+    pub labels: Vec<Label>,
+    pub identifiers: Vec<Identifier>,
+    pub genres: Vec<String>,
+    pub styles: Vec<String>,
+    pub tracklist: Vec<Track>,
 }

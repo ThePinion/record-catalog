@@ -8,7 +8,6 @@ pub struct StatefulList<T> {
 impl<T> StatefulList<T> {
     pub fn with_items(items: Vec<T>) -> StatefulList<T> {
         let mut state = ListState::default();
-        state.select(Some(0));
         StatefulList {
             state: state,
             items,

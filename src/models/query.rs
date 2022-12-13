@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct DiscogsSearchResultRelease {
-    id: i64,
+    pub id: i64,
     #[serde(rename = "type")]
     result_type: String,
     pub title: String,

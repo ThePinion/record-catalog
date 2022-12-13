@@ -6,7 +6,10 @@ use std::{
 
 use crossterm::event::{self, Event, KeyCode};
 
-use crate::models::{app::App, error::Result};
+use crate::models::{
+    app::{App, Navigation},
+    error::Result,
+};
 
 pub enum CustomEvent<I> {
     Input(I),
@@ -40,37 +43,56 @@ pub fn start() -> mpsc::Receiver<CustomEvent<event::KeyEvent>> {
     rx
 }
 
-pub trait InputReceiver<T> {
-    fn receive_input(&mut self, event: CustomEvent<event::KeyEvent>) -> Result<T>;
+pub trait InputReceiver {
+    fn input(&mut self, event: CustomEvent<event::KeyEvent>) -> Result<Navigation>;
 }
-impl InputReceiver<bool> for App {
-    fn receive_input(&mut self, event: CustomEvent<event::KeyEvent>) -> Result<bool> {
-        if self.input {
-            let get_input = self.list[self.active].node.receive_input(event)?;
-            self.input = !get_input.relinquish_control;
-            return Ok(true);
+impl InputReceiver for App {
+    fn input(&mut self, event: CustomEvent<event::KeyEvent>) -> Result<Navigation> {
+        let navigation = self.handle_input(event)?;
+
+        match navigation {
+            Navigation::NavigateIndex(index) => self.active = index,
+            Navigation::ViewRelease(release) => {
+                self.active = 1;
+            }
+            Navigation::EnterInput => self.input = true,
+            Navigation::QuitInput => self.input = false,
+            Navigation::Quit => return Ok(Navigation::Quit),
+            _ => {}
         }
+
+        Ok(Navigation::DoNotihing)
+    }
+}
+
+impl App {
+    fn handle_input(&mut self, event: CustomEvent<event::KeyEvent>) -> Result<Navigation> {
+        if self.input {
+            return self.list[self.active].input(event);
+        };
 
         match event {
             CustomEvent::Input(key_event) => {
-                let pos = self.list.iter().position(|p| {
-                    KeyCode::Char(p.title.chars().nth(0).unwrap().to_ascii_lowercase())
+                let bar = self.titles.iter().find(|p| {
+                    KeyCode::Char(p.name.chars().nth(0).unwrap().to_ascii_lowercase())
                         == key_event.code
                 });
-                match pos {
-                    Some(index) => self.active = index,
+                match bar {
+                    Some(bar) => return Ok(Navigation::NavigateIndex(bar.position)),
                     None => match key_event.code {
-                        KeyCode::Char('q') => return Ok(false),
-                        KeyCode::Char('i') => self.input = true,
+                        KeyCode::Char('q') => return Ok(Navigation::Quit),
+                        KeyCode::Char('i') => return Ok(Navigation::EnterInput),
                         KeyCode::Up | KeyCode::Down | KeyCode::Left | KeyCode::Right => {
-                            self.list[self.active].node.as_mut().receive_input(event)?;
+                            return self.list[self.active].as_mut().input(event)
                         }
+
                         _ => {}
                     },
                 }
             }
             CustomEvent::Tick => {}
         };
-        Ok(true)
+
+        Ok(Navigation::DoNotihing)
     }
 }

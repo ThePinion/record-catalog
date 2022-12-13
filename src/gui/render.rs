@@ -18,16 +18,15 @@ impl App {
             let chunks = self.layout_chunks(rect);
             self.render_menu(rect, chunks[0]);
             self.list[self.active]
-                .node
+                .as_mut()
                 .render_main_block(rect, chunks[1]);
         })?;
         Ok(())
     }
 
     fn render_menu(&self, rect: &mut Frame<CrosstermBackend<Stdout>>, area: Rect) {
-        let mut menu: Vec<_> = self.list.iter().map(|t| render_title(&t.title)).collect();
-        let quit = "Quit".to_owned();
-        menu.push(render_title(&quit));
+        let mut menu: Vec<_> = self.titles.iter().map(|t| render_title(&t.name)).collect();
+        menu.push(render_title("Quit"));
 
         // let input = self.input.to_string();
         // menu.push(render_title(&input));
@@ -66,7 +65,7 @@ pub trait Renderable {
     fn render_main_block<'a>(&mut self, rect: &mut Frame<CrosstermBackend<Stdout>>, area: Rect);
 }
 
-fn render_title(title: &String) -> Spans {
+fn render_title(title: &str) -> Spans {
     let (first, rest) = title.split_at(1);
 
     Spans::from(vec![

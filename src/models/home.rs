@@ -9,7 +9,7 @@ use tui_textarea::TextArea;
 use crate::discogs::DiscogsClient;
 
 use super::{
-    app::{AppNode, NavigationResult},
+    app::{AppNode, Navigation},
     list::StatefulList,
     query::DiscogsSearchResultRelease,
 };
@@ -43,4 +43,4 @@ impl Home<'_> {
     }
 }
 
-impl AppNode<NavigationResult> for Home<'_> {}
+impl AppNode for Home<'_> {}

@@ -29,7 +29,7 @@ impl DiscogsClient {
         Self::discogs_request(&url)
     }
 
-    pub fn get_release(self, id: i64) -> Result<Record> {
+    pub fn get_release(&self, id: i64) -> Result<Record> {
         let url = format!("https://api.discogs.com/releases/{}", id);
         Self::discogs_request(&url)
     }
