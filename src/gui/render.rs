@@ -27,9 +27,11 @@ impl App {
     fn render_menu(&self, rect: &mut Frame<CrosstermBackend<Stdout>>, area: Rect) {
         let mut menu: Vec<_> = self.titles.iter().map(|t| render_title(&t.name)).collect();
         menu.push(render_title("Quit"));
+        let temp = self.database.data.len().to_string();
+        menu.push(render_title(temp.as_str()));
 
         // let input = self.input.to_string();
-        // menu.push(render_title(&input));
+        // menu.push(render_title(&input));q
 
         let tabs = Tabs::new(menu)
             .select(self.active)

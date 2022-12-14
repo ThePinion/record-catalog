@@ -52,14 +52,21 @@ impl InputReceiver for App {
 
         match navigation {
             Navigation::NavigateIndex(index) => self.active = index,
-            Navigation::ViewRelease(_) => {
-                let record_detail: usize = (&AppPages::RecordDetail).into();
-                self.active = record_detail;
-                self.list[record_detail].as_mut().navigation(navigation);
+            Navigation::ViewRecord(mut record_detail) => {
+                let index: usize = (&AppPages::RecordDetail).into();
+                record_detail.set_saved(match record_detail.record {
+                    Some(ref record) => self.database.contains(record),
+                    None => true,
+                });
+                self.active = index;
+                self.list[index] = Box::new(record_detail);
             }
             Navigation::EnterInput => self.input = true,
             Navigation::QuitInput => self.input = false,
             Navigation::Quit => return Ok(Navigation::Quit),
+            Navigation::SaveRecord(record) => {
+                self.database.add(record)?;
+            }
             _ => {}
         }
 
@@ -84,7 +91,11 @@ impl App {
                     None => match key_event.code {
                         KeyCode::Char('q') => return Ok(Navigation::Quit),
                         KeyCode::Char('i') => return Ok(Navigation::EnterInput),
-                        KeyCode::Up | KeyCode::Down | KeyCode::Left | KeyCode::Right => {
+                        KeyCode::Up
+                        | KeyCode::Down
+                        | KeyCode::Left
+                        | KeyCode::Right
+                        | KeyCode::Char('+') => {
                             return self.list[self.active].as_mut().input(event)
                         }
 

@@ -1,6 +1,12 @@
 use crossterm::event::{self, KeyCode};
 
-use crate::models::{app::Navigation, error::Result, home::Home, list::StatefulList};
+use crate::models::{
+    app::{AppPages, Navigation},
+    error::Result,
+    home::Home,
+    list::StatefulList,
+    record_detail::RecordDetail,
+};
 
 use super::inputer::{CustomEvent, InputReceiver};
 
@@ -13,6 +19,7 @@ impl InputReceiver for Home<'_> {
                 KeyCode::Right => return self.select_release(),
                 KeyCode::Esc => return Ok(Navigation::QuitInput),
                 KeyCode::Enter => return self.search(),
+                KeyCode::Char('+') => {}
                 _ => {
                     self.search_textarea.input_without_shortcuts(key_event);
                 }
@@ -29,8 +36,23 @@ impl<'a> Home<'a> {
         Ok(match index {
             Some(i) if i < self.search_results.items.len() => {
                 let release = &self.search_results.items[i];
-                let record = self.discogs_client.get_release(release.id)?;
-                Navigation::ViewRelease(record)
+                let record = self.discogs_client.get_release(release.id);
+
+                match record {
+                    Err(_) => {
+                        self.search_results.next();
+                        return Ok(Navigation::DoNotihing);
+                    }
+                    Ok(_) => {}
+                }
+
+                let detail = RecordDetail::new(
+                    Navigation::NavigateIndex(AppPages::Home.into()),
+                    record?,
+                    false,
+                );
+
+                Navigation::ViewRecord(detail)
             }
             _ => Navigation::DoNotihing,
         })

@@ -11,7 +11,15 @@ impl InputReceiver for RecordDetail {
         match event {
             CustomEvent::Input(key_event) => match key_event.code {
                 KeyCode::Right => {}
-                KeyCode::Esc | KeyCode::Left => return Ok(self.back_instruction.clone()),
+                KeyCode::Esc | KeyCode::Left => return Ok(self.back_instruction.as_mut().clone()),
+                KeyCode::Char('+') => {
+                    if !self.is_saved {
+                        match &self.record {
+                            Some(r) => return Ok(Navigation::SaveRecord(r.clone())),
+                            None => {}
+                        }
+                    }
+                }
                 _ => {}
             },
             CustomEvent::Tick => {}

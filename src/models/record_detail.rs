@@ -3,11 +3,12 @@ use super::{
     record::Record,
 };
 
+#[derive(Clone)]
 pub struct RecordDetail {
     pub record: Option<Record>,
     pub is_saved: bool,
     pub message: String,
-    pub back_instruction: Navigation,
+    pub back_instruction: Box<Navigation>,
 }
 
 impl RecordDetail {
@@ -17,15 +18,34 @@ impl RecordDetail {
             record: None,
             is_saved: true,
             message: message,
-            back_instruction,
+            back_instruction: Box::new(back_instruction),
         }
+    }
+
+    pub fn new(back_instruction: Navigation, record: Record, is_saved: bool) -> Self {
+        let mut out = RecordDetail {
+            record: Some(record),
+            is_saved: is_saved,
+            message: "".to_string(),
+            back_instruction: Box::new(back_instruction),
+        };
+        out.set_saved(is_saved);
+        out
+    }
+
+    pub fn set_saved(&mut self, saved: bool) {
+        self.is_saved = saved;
+        self.message = match self.is_saved {
+            true => "Viewing the saved record.",
+            false => "This record's not been saved yet. Press '+' to save it.",
+        }
+        .to_string();
     }
 }
 
 impl AppNode for RecordDetail {
     fn navigation(&mut self, navigation: Navigation) {
         match navigation {
-            Navigation::ViewRelease(record) => self.record = Some(record),
             _ => {}
         }
     }

@@ -1,16 +1,17 @@
-use crate::{gui::render::Renderable, inputer::inputer::InputReceiver};
+use crate::{database::Database, gui::render::Renderable, inputer::inputer::InputReceiver};
 
-use super::{home::Home, record::Record, record_detail::RecordDetail};
+use super::{error::Result, home::Home, record::Record, record_detail::RecordDetail};
 
 pub struct App {
     pub active: usize,
     pub list: Vec<Box<dyn AppNode>>,
     pub titles: Vec<TitleBar>,
     pub input: bool,
+    pub database: Database,
 }
 
 impl App {
-    pub fn new() -> Self {
+    pub fn new() -> Result<Self> {
         let mut list: Vec<Box<dyn AppNode>> = vec![];
         list.push(Box::new(Home::new()));
         let titles = vec![TitleBar {
@@ -18,18 +19,20 @@ impl App {
             position: 0,
         }];
         list.push(Box::new(RecordDetail::empty(Navigation::NavigateIndex(0))));
-        App {
+        Ok(App {
             list: list,
             titles: titles,
             active: 0,
             input: false,
-        }
+            database: Database::new("database.json")?,
+        })
     }
 }
 
 #[derive(Clone)]
 pub enum Navigation {
-    ViewRelease(Record),
+    ViewRecord(RecordDetail),
+    SaveRecord(Record),
     NavigateIndex(usize),
     DoNotihing,
     QuitInput,
@@ -46,6 +49,12 @@ pub enum AppPages {
 impl Into<usize> for &AppPages {
     fn into(self) -> usize {
         *self as usize
+    }
+}
+
+impl Into<usize> for AppPages {
+    fn into(self) -> usize {
+        self as usize
     }
 }
 
