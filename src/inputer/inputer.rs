@@ -7,7 +7,7 @@ use std::{
 use crossterm::event::{self, Event, KeyCode};
 
 use crate::models::{
-    app::{App, Navigation},
+    app::{App, AppPages, Navigation},
     error::Result,
 };
 
@@ -52,8 +52,10 @@ impl InputReceiver for App {
 
         match navigation {
             Navigation::NavigateIndex(index) => self.active = index,
-            Navigation::ViewRelease(release) => {
-                self.active = 1;
+            Navigation::ViewRelease(_) => {
+                let record_detail: usize = (&AppPages::RecordDetail).into();
+                self.active = record_detail;
+                self.list[record_detail].as_mut().navigation(navigation);
             }
             Navigation::EnterInput => self.input = true,
             Navigation::QuitInput => self.input = false,

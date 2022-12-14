@@ -40,6 +40,7 @@ impl<'a> Home<'a> {
         let query = &self.search_textarea.lines()[0];
         let results = self.discogs_client.query(&query)?.get_releases();
         self.search_results = StatefulList::with_items(results);
+        self.search_results.next();
         return Ok(Navigation::QuitInput);
     }
 }

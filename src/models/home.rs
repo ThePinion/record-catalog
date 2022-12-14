@@ -43,4 +43,6 @@ impl Home<'_> {
     }
 }
 
-impl AppNode for Home<'_> {}
+impl AppNode for Home<'_> {
+    fn navigation(&mut self, _navigation: Navigation) {}
+}

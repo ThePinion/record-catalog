@@ -7,7 +7,7 @@ pub struct StatefulList<T> {
 
 impl<T> StatefulList<T> {
     pub fn with_items(items: Vec<T>) -> StatefulList<T> {
-        let mut state = ListState::default();
+        let state = ListState::default();
         StatefulList {
             state: state,
             items,
@@ -42,6 +42,7 @@ impl<T> StatefulList<T> {
         self.state.select(Some(i));
     }
 
+    #[allow(dead_code)]
     pub fn unselect(&mut self) {
         self.state.select(None);
     }

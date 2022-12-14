@@ -1,3 +1,3 @@
 pub mod home;
 pub mod inputer;
-pub mod recordDetail;
+pub mod record_detail;

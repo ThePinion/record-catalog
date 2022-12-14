@@ -4,9 +4,9 @@ use serde::{Deserialize, Serialize};
 pub struct DiscogsSearchResultRelease {
     pub id: i64,
     #[serde(rename = "type")]
-    result_type: String,
+    pub result_type: String,
     pub title: String,
-    format: Vec<String>,
+    pub format: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

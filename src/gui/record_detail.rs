@@ -3,13 +3,13 @@ use std::io::Stdout;
 use tui::{
     backend::CrosstermBackend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
-    style::{Color, Modifier, Style},
+    style::{Color, Style},
     text::{Span, Spans},
-    widgets::{Block, BorderType, Borders, List, ListItem, Paragraph},
+    widgets::{Block, BorderType, Borders, Paragraph},
     Frame,
 };
 
-use crate::models::recordDetail::RecordDetail;
+use crate::models::record_detail::RecordDetail;
 
 use super::render::Renderable;
 
@@ -17,13 +17,14 @@ impl Renderable for RecordDetail {
     fn render_main_block<'a>(&mut self, rect: &mut Frame<CrosstermBackend<Stdout>>, area: Rect) {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
-            .constraints([Constraint::Min(2), Constraint::Length(2)].as_ref())
+            .constraints([Constraint::Min(2), Constraint::Length(3)].as_ref())
             .split(area);
 
         let title: &str = match &self.record {
             Some(r) => &r.title,
             None => "Empty",
         };
+
         let main = Paragraph::new(vec![Spans::from(vec![Span::raw(title)])])
             .alignment(Alignment::Center)
             .block(

@@ -1,4 +1,4 @@
-use crate::models::recordDetail::RecordDetail;
+use crate::models::record_detail::RecordDetail;
 
 use crossterm::event::{self, KeyCode};
 

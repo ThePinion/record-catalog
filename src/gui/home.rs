@@ -46,7 +46,14 @@ impl Renderable for Home<'_> {
             self.search_results
                 .items
                 .iter()
-                .map(|r| ListItem::new(r.title.to_owned()))
+                .map(|r| {
+                    ListItem::new(
+                        r.title.to_owned()
+                            + &r.format
+                                .iter()
+                                .fold(" # ".to_string(), |a, f| a + f + " | "),
+                    )
+                })
                 .collect::<Vec<_>>(),
         )
         .block(Block::default().borders(Borders::ALL).title("List"))

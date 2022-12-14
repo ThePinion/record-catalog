@@ -1,6 +1,6 @@
 use crate::{gui::render::Renderable, inputer::inputer::InputReceiver};
 
-use super::{home::Home, record::Record, recordDetail::RecordDetail};
+use super::{home::Home, record::Record, record_detail::RecordDetail};
 
 pub struct App {
     pub active: usize,
@@ -37,7 +37,21 @@ pub enum Navigation {
     Quit,
 }
 
-pub trait AppNode: Renderable + InputReceiver {}
+#[derive(Copy, Clone)]
+pub enum AppPages {
+    Home,
+    RecordDetail,
+}
+
+impl Into<usize> for &AppPages {
+    fn into(self) -> usize {
+        *self as usize
+    }
+}
+
+pub trait AppNode: Renderable + InputReceiver {
+    fn navigation(&mut self, navigation: Navigation);
+}
 
 pub struct TitleBar {
     pub name: String,
