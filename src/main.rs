@@ -3,7 +3,7 @@ mod discogs;
 mod gui;
 mod inputer;
 mod models;
-use inputer::inputer::InputReceiver;
+use database::Database;
 use models::{
     app::{App, Navigation},
     error::Result,
@@ -17,13 +17,14 @@ fn main() -> Result<()> {
 
     let mut terminal = gui::terminal::start()?;
 
+    let mut database = Database::new("database.json")?;
+
     let mut app = App::new()?;
 
     loop {
         app.render(&mut terminal)?;
-        match app.input(receiver.recv()?)? {
-            Navigation::Quit => break,
-            _ => {}
+        if app.input(receiver.recv()?)? {
+            break;
         }
     }
 

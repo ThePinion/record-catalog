@@ -1,7 +1,4 @@
-use super::{
-    app::{AppNode, Navigation},
-    record::Record,
-};
+use super::{app::Navigation, record::Record};
 
 #[derive(Clone)]
 pub struct RecordDetail {
@@ -40,13 +37,5 @@ impl RecordDetail {
             false => "This record's not been saved yet. Press '+' to save it.",
         }
         .to_string();
-    }
-}
-
-impl AppNode for RecordDetail {
-    fn navigation(&mut self, navigation: Navigation) {
-        match navigation {
-            _ => {}
-        }
     }
 }

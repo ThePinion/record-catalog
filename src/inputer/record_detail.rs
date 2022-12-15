@@ -4,9 +4,9 @@ use crossterm::event::{self, KeyCode};
 
 use crate::models::{app::Navigation, error::Result};
 
-use super::inputer::{CustomEvent, InputReceiver};
+use super::inputer::CustomEvent;
 
-impl InputReceiver for RecordDetail {
+impl RecordDetail {
     fn input(&mut self, event: CustomEvent<event::KeyEvent>) -> Result<Navigation> {
         match event {
             CustomEvent::Input(key_event) => match key_event.code {
@@ -15,7 +15,7 @@ impl InputReceiver for RecordDetail {
                 KeyCode::Char('+') => {
                     if !self.is_saved {
                         match &self.record {
-                            Some(r) => return Ok(Navigation::SaveRecord(r.clone())),
+                            Some(r) => return Ok(Navigation::SaveRecord),
                             None => {}
                         }
                     }

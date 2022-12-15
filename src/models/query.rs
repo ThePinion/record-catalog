@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct DiscogsSearchResultRelease {
     pub id: i64,
     #[serde(rename = "type")]
@@ -34,7 +34,13 @@ impl DiscogsSearchResponse {
         self.results
             .into_iter()
             .filter_map(|r| match r {
-                DiscogsSearchResult::DiscogsSearchResultRelease(o) => Some(o),
+                DiscogsSearchResult::DiscogsSearchResultRelease(o) => {
+                    if o.result_type == "release" {
+                        Some(o)
+                    } else {
+                        None
+                    }
+                }
                 DiscogsSearchResult::DiscogsSearchResultOther(_) => None,
             })
             .collect()

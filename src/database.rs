@@ -19,6 +19,27 @@ impl Database {
         return self.data.contains(record);
     }
 
+    pub fn search(&self, query: &str) -> Vec<Record> {
+        return self
+            .data
+            .iter()
+            .filter(|r| {
+                let json = serde_json::to_string(&r).unwrap();
+                return json.contains(query);
+            })
+            .map(|r| r.clone())
+            .collect();
+    }
+
+    pub fn contains_id(&self, id: i64) -> bool {
+        return self
+            .data
+            .iter()
+            .map(|r| r.id)
+            .collect::<Vec<_>>()
+            .contains(&id);
+    }
+
     pub fn add(&mut self, record: Record) -> Result<()> {
         if self.contains(&record) {
             return Err("")?;
