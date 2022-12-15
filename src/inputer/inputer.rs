@@ -10,6 +10,7 @@ use crate::models::{
     app::{App, AppPage, AppPages, Navigation},
     error::Result,
     list::StatefulList,
+    record::Record,
 };
 
 pub enum CustomEvent<I> {
@@ -51,43 +52,27 @@ impl App<'_> {
     }
 
     fn navigation(&mut self, navigation: Navigation) -> Result<bool> {
+        if let Navigation::DoNotihing = navigation {
+        } else {
+            self.message_box = "".to_owned()
+        }
+
         match navigation {
             Navigation::NavigatePage(page) => {
                 self.active = page;
-                match self.active {
-                    AppPages::Search => {
-                        let query = &self.main_input.lines()[0];
-                        let items = self.database.search(&query);
-                        self.search.list = StatefulList::with_items(items);
-                    }
-                    _ => {}
-                };
             }
-            // Navigation::ViewRecord(mut record_detail) => {
-            //     let index: usize = (&AppPages::RecordDetail).into();
-            //     record_detail.set_saved(match record_detail.record {
-            //         Some(ref record) => self.database.contains(record),
-            //         None => true,
-            //     });
-            //     self.active = index;
-            //     self.list[index] = Box::new(record_detail);
-            // }
             Navigation::EnterInput => {
                 if self.active.show_input() {
                     self.input = true;
                 }
             }
-
             Navigation::QuitInput => self.input = false,
             Navigation::Quit => return Ok(true),
-            // Navigation::SaveRecord(record) => {
-            //     let index: usize = (&AppPages::RecordDetail).into();
-            //     self.list[index].navigation(Navigation::SaveRecord(record.clone()));
-            //     self.database.add(record)?;
-            // }
-            Navigation::WebSearch => {
-                self.search()?;
-            }
+            Navigation::InputSubmit => match self.active {
+                AppPages::Search => self.search()?,
+                AppPages::WebSearch => self.web_search()?,
+                _ => {}
+            },
             Navigation::Combined(vector) => {
                 let results: Vec<_> = vector
                     .into_iter()
@@ -109,7 +94,7 @@ impl App<'_> {
                     KeyCode::Enter => {
                         return Ok(Navigation::Combined(vec![
                             Navigation::QuitInput,
-                            Navigation::WebSearch,
+                            Navigation::InputSubmit,
                         ]))
                     }
                     _ => {
@@ -140,7 +125,7 @@ impl App<'_> {
     fn handle_page_specific_input(&mut self, code: KeyCode) -> Result<Navigation> {
         match self.active {
             AppPages::Home => Ok(Navigation::DoNotihing),
-            AppPages::Search => Ok(Navigation::DoNotihing),
+            AppPages::Search => self.handle_search_input(code),
             AppPages::WebSearch => self.handle_web_search_input(code),
         }
     }
@@ -157,15 +142,62 @@ impl App<'_> {
 
                 Navigation::DoNotihing
             }
-            KeyCode::Enter => {
-                self.search.selected = match self.select_release_from_web_search() {
-                    Ok(r) => Some(r),
-                    Err(_) => None,
-                };
+            KeyCode::Enter => match self.select_release_from_web_search() {
+                Ok(r) => {
+                    self.search.selected = Some(r);
+                    Navigation::Combined(vec![
+                        Navigation::NavigatePage(AppPages::Search),
+                        Navigation::InputSubmit,
+                    ])
+                }
+                Err(_) => {
+                    self.message_box = "Release couldn't be loaded!".to_string();
+                    Navigation::DoNotihing
+                }
+            },
 
-                Navigation::NavigatePage(AppPages::Search)
+            _ => Navigation::DoNotihing,
+        })
+    }
+
+    fn handle_search_input(&mut self, code: KeyCode) -> Result<Navigation> {
+        Ok(match code {
+            KeyCode::Up => {
+                self.search.list.previous();
+                self.search_page_update_selected();
+                Navigation::DoNotihing
+            }
+            KeyCode::Down => {
+                self.search.list.next();
+                self.search_page_update_selected();
+                Navigation::DoNotihing
+            }
+            KeyCode::Char('+') => {
+                if !self.search.is_saved {
+                    match &self.search.selected {
+                        Some(r) => {
+                            self.database.add(r.clone());
+                            self.message_box = "Record Saved".to_string();
+                        }
+                        None => {}
+                    }
+                } else {
+                    self.message_box = "Record already saved".to_string();
+                }
+                Navigation::DoNotihing
             }
             _ => Navigation::DoNotihing,
         })
+    }
+
+    fn search_page_update_selected(&mut self) {
+        if let Some(index) = self.search.list.state.selected() {
+            self.search_page_set_selected(self.search.list.items[index].clone());
+        }
+    }
+
+    fn search_page_set_selected(&mut self, record: Record) {
+        self.search.is_saved = self.database.contains(&record);
+        self.search.selected = Some(record);
     }
 }

@@ -24,8 +24,8 @@ impl Database {
             .data
             .iter()
             .filter(|r| {
-                let json = serde_json::to_string(&r).unwrap();
-                return json.contains(query);
+                let json = serde_json::to_string(&r).unwrap().to_ascii_lowercase();
+                return json.contains(&query.to_ascii_lowercase());
             })
             .map(|r| r.clone())
             .collect();

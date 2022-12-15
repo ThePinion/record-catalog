@@ -164,8 +164,7 @@ impl App<'_> {
             Style::default()
                 .bg(Color::DarkGray)
                 .add_modifier(Modifier::BOLD),
-        )
-        .highlight_symbol(" + ");
+        );
 
         rect.render_stateful_widget(query_list, area, &mut self.query_results.state);
     }
@@ -199,17 +198,26 @@ impl App<'_> {
                 .add_modifier(Modifier::BOLD),
         );
 
-        let details = if let Some(i) = &self.search.selected {
-            i.title.clone()
+        let contents: String;
+        let title: String;
+        if let Some(r) = &self.search.selected {
+            title = r.title.clone()
+                + " "
+                + match self.database.contains(&r) {
+                    true => " ✅ ",
+                    false => " ❌ ",
+                };
+            contents = format!("{:#?}", r);
         } else {
-            "".to_string()
+            title = "".to_string();
+            contents = "No record selected".to_string();
         };
 
-        let detail = Paragraph::new(details.as_str()).block(
+        let detail = Paragraph::new(contents).block(
             Block::default()
                 .borders(Borders::ALL)
                 .style(Style::default().fg(Color::White))
-                .title(details.as_str())
+                .title(title.as_str())
                 .border_type(BorderType::Plain),
         );
 
@@ -218,7 +226,7 @@ impl App<'_> {
     }
 
     fn render_message(&mut self, rect: &mut Frame<CrosstermBackend<Stdout>>, area: Rect) {
-        let message = Paragraph::new(vec![Spans::from(vec![Span::raw(self.message_box)])])
+        let message = Paragraph::new(vec![Spans::from(vec![Span::raw(self.message_box.clone())])])
             .alignment(Alignment::Center)
             .block(
                 Block::default()

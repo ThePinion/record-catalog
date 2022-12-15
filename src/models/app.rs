@@ -59,7 +59,7 @@ pub struct App<'a> {
     pub database: Database,
     pub discogs_client: DiscogsClient,
     pub main_input: TextArea<'a>,
-    pub message_box: &'a str,
+    pub message_box: String,
     pub query_results: StatefulList<DiscogsSearchResultRelease>,
     pub search: Search,
 }
@@ -81,16 +81,23 @@ impl App<'_> {
             discogs_client: discogs_client,
             main_input: input,
             query_results: StatefulList::with_items(search_results),
-            message_box: "",
+            message_box: "".to_string(),
             search: Search::empty(),
         })
     }
 
-    pub fn search(&mut self) -> Result<()> {
+    pub fn web_search(&mut self) -> Result<()> {
         let query = &self.main_input.lines()[0];
         let results = self.discogs_client.query(&query)?.get_releases();
         self.query_results = StatefulList::with_items(results);
-        self.query_results.next();
+        return Ok(());
+    }
+
+    pub fn search(&mut self) -> Result<()> {
+        let query = &self.main_input.lines()[0];
+        let results = self.database.search(query);
+        self.message_box = format!("Found {} results", results.len());
+        self.search.list = StatefulList::with_items(results);
         return Ok(());
     }
 
@@ -111,9 +118,7 @@ impl App<'_> {
 #[derive(Clone)]
 pub enum Navigation {
     NavigatePage(AppPages),
-    WebSearch,
-    ViewRecord,
-    SaveRecord,
+    InputSubmit,
     DoNotihing,
     QuitInput,
     EnterInput,

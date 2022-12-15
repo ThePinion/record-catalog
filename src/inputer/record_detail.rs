@@ -15,7 +15,7 @@ impl RecordDetail {
                 KeyCode::Char('+') => {
                     if !self.is_saved {
                         match &self.record {
-                            Some(r) => return Ok(Navigation::SaveRecord),
+                            Some(r) => return Ok(Navigation::DoNotihing),
                             None => {}
                         }
                     }
