@@ -9,7 +9,6 @@ use crossterm::event::{self, Event, KeyCode};
 use crate::models::{
     app::{App, AppPage, AppPages, Navigation},
     error::Result,
-    record::Record,
 };
 
 pub enum CustomEvent<I> {
@@ -121,7 +120,7 @@ impl App<'_> {
         })
     }
 
-    fn handle_page_specific_input(&mut self, code: KeyCode) -> Result<Navigation> {
+    pub fn handle_page_specific_input(&mut self, code: KeyCode) -> Result<Navigation> {
         match self.active {
             AppPages::Home => Ok(Navigation::DoNotihing),
             AppPages::Search => self.handle_search_input(code),
@@ -129,7 +128,7 @@ impl App<'_> {
         }
     }
 
-    fn handle_web_search_input(&mut self, code: KeyCode) -> Result<Navigation> {
+    pub fn handle_web_search_input(&mut self, code: KeyCode) -> Result<Navigation> {
         Ok(match code {
             KeyCode::Up => {
                 self.query_results.previous();
@@ -157,64 +156,5 @@ impl App<'_> {
 
             _ => Navigation::DoNotihing,
         })
-    }
-
-    fn handle_search_input(&mut self, code: KeyCode) -> Result<Navigation> {
-        Ok(match code {
-            KeyCode::Up => {
-                self.search.list.previous();
-                self.search_page_update_selected();
-                Navigation::DoNotihing
-            }
-            KeyCode::Down => {
-                self.search.list.next();
-                self.search_page_update_selected();
-                Navigation::DoNotihing
-            }
-            KeyCode::Insert => {
-                if !self.search.is_saved {
-                    match &self.search.selected {
-                        Some(r) => {
-                            self.database.add(r.clone())?;
-                            self.search.is_saved = true;
-                            self.message_box = "Record Saved".to_string();
-                            return Ok(Navigation::InputSubmit);
-                        }
-                        None => {}
-                    }
-                } else {
-                    self.message_box = "Record already saved".to_string();
-                }
-                Navigation::DoNotihing
-            },
-            KeyCode::Delete => {
-                if self.search.is_saved {
-                    match &self.search.selected {
-                        Some(r) => {
-                            self.database.remove(r)?;
-                            self.search.is_saved = false;
-                            self.message_box = "Record Deleted".to_string();
-                            return Ok(Navigation::InputSubmit);
-                        }
-                        None => {}
-                    }
-                } else {
-                    self.message_box = "Record not saved".to_string();
-                }
-                Navigation::DoNotihing
-            }
-            _ => Navigation::DoNotihing,
-        })
-    }
-
-    fn search_page_update_selected(&mut self) {
-        if let Some(index) = self.search.list.state.selected() {
-            self.search_page_set_selected(self.search.list.items[index].clone());
-        }
-    }
-
-    fn search_page_set_selected(&mut self, record: Record) {
-        self.search.is_saved = self.database.contains(&record);
-        self.search.selected = Some(record);
     }
 }

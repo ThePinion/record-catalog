@@ -200,28 +200,32 @@ impl App<'_> {
 
         rect.render_stateful_widget(query_list, chunks[0], &mut self.search.list.state);
         self.render_record_detail(rect, chunks[1]);
-       
     }
 
-    fn render_record_detail(&mut self, rect: &mut Frame<CrosstermBackend<Stdout>>, area: Rect){
+    fn render_record_detail(&mut self, rect: &mut Frame<CrosstermBackend<Stdout>>, area: Rect) {
         let mut detail: Paragraph;
         let title: String;
         if let Some(r) = &self.search.selected {
             title = match self.database.contains(&r) {
-                    true => " ✅ Record saved",
-                    false => " ❌ Record not saved",
-                }.to_string();
+                true => " ✅ Record saved",
+                false => " ❌ Record not saved",
+            }
+            .to_string();
 
-            let spans: Vec<_> = r.get_lines().into_iter().map(|s| Spans::from(vec![Span::raw(""), Span::raw(s)])).collect();
+            let spans: Vec<_> = r
+                .get_lines()
+                .into_iter()
+                .map(|s| Spans::from(vec![Span::raw(""), Span::raw(s)]))
+                .collect::<Vec<_>>()[self.search.detail_offset..]
+                .into();
 
             detail = Paragraph::new(spans);
-
         } else {
             title = "".to_string();
             detail = Paragraph::new("No record selected".to_string());
         };
 
-       detail = detail.block(
+        detail = detail.block(
             Block::default()
                 .borders(Borders::ALL)
                 .style(Style::default().fg(Color::White))

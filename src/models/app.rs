@@ -123,6 +123,7 @@ pub struct Search {
     pub list: StatefulList<Record>,
     pub selected: Option<Record>,
     pub is_saved: bool,
+    pub detail_offset: usize,
 }
 
 impl Search {
@@ -131,6 +132,7 @@ impl Search {
             list: StatefulList::with_items(vec![]),
             selected: None,
             is_saved: true,
+            detail_offset: 0,
         }
     }
 }
