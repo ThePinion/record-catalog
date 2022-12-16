@@ -1,4 +1,4 @@
-use std::{error::Error, fs};
+use std::fs;
 
 use crate::models::{error::Result, record::Record};
 
@@ -25,7 +25,10 @@ impl Database {
             .iter()
             .filter(|r| {
                 let json = serde_json::to_string(&r).unwrap().to_ascii_lowercase();
-                return json.contains(&query.to_ascii_lowercase());
+                return query
+                    .to_ascii_lowercase()
+                    .split_ascii_whitespace()
+                    .all(|q| json.contains(q));
             })
             .map(|r| r.clone())
             .collect();

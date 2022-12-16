@@ -9,7 +9,6 @@ use crossterm::event::{self, Event, KeyCode};
 use crate::models::{
     app::{App, AppPage, AppPages, Navigation},
     error::Result,
-    list::StatefulList,
     record::Record,
 };
 
@@ -98,7 +97,7 @@ impl App<'_> {
                         ]))
                     }
                     _ => {
-                        self.main_input.input_without_shortcuts(key_event);
+                        self.main_input.input(key_event);
                     }
                 },
                 _ => {}

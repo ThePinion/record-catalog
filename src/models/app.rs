@@ -1,15 +1,8 @@
-use tui::{
-    style::Style,
-    widgets::{Block, Borders},
-};
 use tui_textarea::TextArea;
 
 use crate::{database::Database, discogs::DiscogsClient};
 
-use super::{
-    error::Result, list::StatefulList, query::DiscogsSearchResultRelease, record::Record,
-    record_detail::RecordDetail,
-};
+use super::{error::Result, list::StatefulList, query::DiscogsSearchResultRelease, record::Record};
 
 use strum::{EnumIter, IntoEnumIterator};
 
@@ -71,7 +64,7 @@ impl App<'_> {
 
         let search_results = vec![];
 
-        let mut input = TextArea::default();
+        let input = TextArea::default();
 
         Ok(App {
             pages: AppPages::iter().collect::<Vec<_>>(),
@@ -142,19 +135,8 @@ impl Search {
     }
 }
 
-// #[derive(Copy, Clone)]
-// pub enum AppPages {
-//     Home,
-//     RecordDetail,
-// }
-
 impl Into<usize> for AppPages {
     fn into(self) -> usize {
         self as usize
     }
-}
-
-pub struct TitleBar {
-    pub name: String,
-    pub position: usize,
 }

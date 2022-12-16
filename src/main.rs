@@ -3,12 +3,7 @@ mod discogs;
 mod gui;
 mod inputer;
 mod models;
-use database::Database;
-use models::{
-    app::{App, Navigation},
-    error::Result,
-    record::Label,
-};
+use models::{app::App, error::Result, record::Label};
 
 fn main() -> Result<()> {
     // return test();
@@ -16,8 +11,6 @@ fn main() -> Result<()> {
     let receiver = inputer::inputer::start();
 
     let mut terminal = gui::terminal::start()?;
-
-    let mut database = Database::new("database.json")?;
 
     let mut app = App::new()?;
 
