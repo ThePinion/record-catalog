@@ -18,6 +18,10 @@ impl TM {
         out = out.trim_end_matches(delimiter).to_string();
         TM::Line(out)
     }
+
+    fn blank() -> TM {
+        TM::Line("".to_string())
+    }
 }
 
 struct Tab {
@@ -29,6 +33,7 @@ impl Tab {
         Tab { children: children }
     }
 
+    #[allow(dead_code)]
     fn single(child: TM) -> Self {
         Tab {
             children: vec![child],
@@ -67,9 +72,9 @@ impl Tab {
 impl Record {
     pub fn get_lines(&self) -> Vec<String> {
         let mut main_tab_module = Tab::new(vec![
-            TM::Line("".to_string()),
+            TM::blank(),
             TM::Line(self.title.clone()),
-            TM::Line("".to_string()),
+            TM::blank(),
             TM::Line("Year: ".to_owned() + &self.year.to_string()),
             TM::Line("Artists:".to_string()),
             TM::Module(Tab::from_strings(
@@ -82,11 +87,19 @@ impl Record {
             TM::line_with_title("Genres: ", self.genres.clone(), " | "),
             TM::line_with_title("Styles: ", self.styles.clone(), " | "),
             TM::Line("Tracklist: ".to_string()),
-            TM::Line("".to_string()),
-    
+            TM::blank(),
         ]);
 
-        self.tracklist.iter().map(|t| t.get_module()).for_each(|m| main_tab_module.children.push(m));
+        self.tracklist
+            .iter()
+            .map(|t| t.get_module())
+            .for_each(|m| main_tab_module.children.push(m));
+
+        main_tab_module.children.append(&mut vec![
+            TM::blank(),
+            TM::blank(),
+            TM::Line(format!("Id: {:?}", self.id)),
+        ]);
 
         main_tab_module.get_lines(1)
     }
@@ -96,13 +109,18 @@ impl Track {
     fn get_module(&self) -> TM {
         let position = match self.position.as_str() {
             "" => "".to_string(),
-            _ => self.position.clone() + ". ",
+            _ => self.position.clone() + ".",
         };
-        let mut tab = Tab::new(vec![TM::Line(
-            position + &self.title + "    " + &self.duration.to_string(),
-        )]);
+        let duration = match self.duration.as_str() {
+            "" => "".to_string(),
+            _ => " [".to_string() + &self.duration + "] ",
+        };
+        let mut tab = Tab::new(vec![TM::Line(position + &duration + &self.title)]);
         if let Some(sub_tracks) = &self.sub_tracks {
-            sub_tracks.iter().map(|s| s.get_module()).for_each(|m| tab.children.push(m));
+            sub_tracks
+                .iter()
+                .map(|s| s.get_module())
+                .for_each(|m| tab.children.push(m));
             tab.children.push(TM::Line("".to_string()));
         };
         TM::Module(tab)

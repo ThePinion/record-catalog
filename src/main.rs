@@ -3,7 +3,9 @@ mod discogs;
 mod gui;
 mod inputer;
 mod models;
-use models::{app::App, error::Result, record::Label};
+use std::fs;
+
+use models::{app::App, error::Result, record::Label, settings::Settings};
 
 fn main() -> Result<()> {
     // return test();
@@ -12,7 +14,7 @@ fn main() -> Result<()> {
 
     let mut terminal = gui::terminal::start()?;
 
-    let mut app = App::new()?;
+    let mut app = App::new(load_settings()?)?;
 
     loop {
         app.render(&mut terminal)?;
@@ -24,6 +26,11 @@ fn main() -> Result<()> {
     gui::terminal::end(&mut terminal)?;
 
     Ok(())
+}
+
+fn load_settings() -> Result<Settings> {
+    let string = fs::read_to_string("settings.json")?;
+    Ok(serde_json::from_str::<Settings>(&string)?)
 }
 
 #[allow(dead_code)]

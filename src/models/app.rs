@@ -2,7 +2,10 @@ use tui_textarea::TextArea;
 
 use crate::{database::Database, discogs::DiscogsClient};
 
-use super::{error::Result, list::StatefulList, query::DiscogsSearchResultRelease, record::Record};
+use super::{
+    error::Result, list::StatefulList, query::DiscogsSearchResultRelease, record::Record,
+    settings::Settings,
+};
 
 use strum::{EnumIter, IntoEnumIterator};
 
@@ -58,9 +61,8 @@ pub struct App<'a> {
 }
 
 impl App<'_> {
-    pub fn new() -> Result<Self> {
-        let discogs_client: DiscogsClient =
-            DiscogsClient::new("gqvzVtgoghLkXbwsvkyXgmdoVeLZSebShZFpORVx");
+    pub fn new(settings: Settings) -> Result<Self> {
+        let discogs_client: DiscogsClient = DiscogsClient::new(&settings.discogs_key);
 
         let search_results = vec![];
 
@@ -70,7 +72,7 @@ impl App<'_> {
             pages: AppPages::iter().collect::<Vec<_>>(),
             active: AppPages::Home,
             input: false,
-            database: Database::new("database.json")?,
+            database: Database::new(&settings.database_path)?,
             discogs_client: discogs_client,
             main_input: input,
             query_results: StatefulList::with_items(search_results),
@@ -82,6 +84,7 @@ impl App<'_> {
     pub fn web_search(&mut self) -> Result<()> {
         let query = &self.main_input.lines()[0];
         let results = self.discogs_client.query(&query)?.get_releases();
+        self.message_box = format!("Found {} results", results.len());
         self.query_results = StatefulList::with_items(results);
         return Ok(());
     }

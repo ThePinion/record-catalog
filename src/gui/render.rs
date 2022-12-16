@@ -8,7 +8,7 @@ use tui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Span, Spans},
-    widgets::{Block, BorderType, Borders, List, ListItem, Paragraph, Tabs},
+    widgets::{Block, BorderType, Borders, List, ListItem, Paragraph, Tabs, Wrap},
     Frame, Terminal,
 };
 
@@ -145,16 +145,13 @@ impl App<'_> {
                 .map(|r| {
                     ListItem::new(
                         match self.database.contains_id(r.id) {
-                            true => " ✅ ",
-                            false => " ❌ ",
+                            true => " ✅   ",
+                            false => " ❌   ",
                         }
                         .to_owned()
                             + &r.title.to_owned()
-                            + &r.result_type
-                            + &r.format
-                                .iter()
-                                .fold(" # ".to_string(), |a, f| a + f + " | ")
-                            + &format!("{}", r.id),
+                            + "    "
+                            + &r.format.iter().fold("".to_string(), |a, f| a + f + " | "),
                     )
                 })
                 .collect::<Vec<_>>(),
@@ -172,7 +169,7 @@ impl App<'_> {
     fn render_search_page(&mut self, rect: &mut Frame<CrosstermBackend<Stdout>>, area: Rect) {
         let chunks = Layout::default()
             .direction(Direction::Horizontal)
-            .constraints([Constraint::Percentage(30), Constraint::Percentage(70)].as_ref())
+            .constraints([Constraint::Percentage(40), Constraint::Percentage(60)].as_ref())
             .split(area);
 
         let query_list = List::new(
@@ -219,7 +216,7 @@ impl App<'_> {
                 .collect::<Vec<_>>()[self.search.detail_offset..]
                 .into();
 
-            detail = Paragraph::new(spans);
+            detail = Paragraph::new(spans).wrap(Wrap { trim: false })
         } else {
             title = "".to_string();
             detail = Paragraph::new("No record selected".to_string());
