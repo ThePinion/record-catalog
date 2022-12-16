@@ -198,31 +198,38 @@ impl App<'_> {
                 .add_modifier(Modifier::BOLD),
         );
 
-        let contents: String;
+        rect.render_stateful_widget(query_list, chunks[0], &mut self.search.list.state);
+        self.render_record_detail(rect, chunks[1]);
+       
+    }
+
+    fn render_record_detail(&mut self, rect: &mut Frame<CrosstermBackend<Stdout>>, area: Rect){
+        let mut detail: Paragraph;
         let title: String;
         if let Some(r) = &self.search.selected {
-            title = r.title.clone()
-                + " "
-                + match self.database.contains(&r) {
-                    true => " ✅ ",
-                    false => " ❌ ",
-                };
-            contents = format!("{:#?}", r);
+            title = match self.database.contains(&r) {
+                    true => " ✅ Record saved",
+                    false => " ❌ Record not saved",
+                }.to_string();
+
+            let spans: Vec<_> = r.get_lines().into_iter().map(|s| Spans::from(vec![Span::raw(""), Span::raw(s)])).collect();
+
+            detail = Paragraph::new(spans);
+
         } else {
             title = "".to_string();
-            contents = "No record selected".to_string();
+            detail = Paragraph::new("No record selected".to_string());
         };
 
-        let detail = Paragraph::new(contents).block(
+       detail = detail.block(
             Block::default()
                 .borders(Borders::ALL)
                 .style(Style::default().fg(Color::White))
-                .title(title.as_str())
+                .title(title)
                 .border_type(BorderType::Plain),
         );
 
-        rect.render_stateful_widget(query_list, chunks[0], &mut self.search.list.state);
-        rect.render_widget(detail, chunks[1]);
+        rect.render_widget(detail, area);
     }
 
     fn render_message(&mut self, rect: &mut Frame<CrosstermBackend<Stdout>>, area: Rect) {

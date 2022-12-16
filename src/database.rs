@@ -45,12 +45,25 @@ impl Database {
 
     pub fn add(&mut self, record: Record) -> Result<()> {
         if self.contains(&record) {
-            return Err("")?;
+            return Ok(());
         }
 
         self.data.push(record);
 
         self.save()
+    }
+
+    #[allow(dead_code)]
+    pub fn remove(&mut self, record: &Record) -> Result<()> {
+        let index = self.data.iter().position(|x| x == record);
+        if let Some(i) = index {
+            self.data.remove(i);
+
+            self.save()?;
+        }
+
+        Ok(())
+
     }
 
     fn initial_load(file_path: &str) -> Result<Vec<Record>> {

@@ -19,7 +19,7 @@ pub enum CustomEvent<I> {
 
 pub fn start() -> mpsc::Receiver<CustomEvent<event::KeyEvent>> {
     let (tx, rx) = mpsc::channel();
-    let tick_rate = Duration::from_millis(200);
+    let tick_rate = Duration::from_millis(100);
 
     thread::spawn(move || {
         let mut last_tick = Instant::now();
@@ -171,11 +171,12 @@ impl App<'_> {
                 self.search_page_update_selected();
                 Navigation::DoNotihing
             }
-            KeyCode::Char('+') => {
+            KeyCode::Insert => {
                 if !self.search.is_saved {
                     match &self.search.selected {
                         Some(r) => {
                             self.database.add(r.clone())?;
+                            self.search.is_saved = true;
                             self.message_box = "Record Saved".to_string();
                             return Ok(Navigation::InputSubmit);
                         }
@@ -183,6 +184,22 @@ impl App<'_> {
                     }
                 } else {
                     self.message_box = "Record already saved".to_string();
+                }
+                Navigation::DoNotihing
+            },
+            KeyCode::Delete => {
+                if self.search.is_saved {
+                    match &self.search.selected {
+                        Some(r) => {
+                            self.database.remove(r)?;
+                            self.search.is_saved = false;
+                            self.message_box = "Record Deleted".to_string();
+                            return Ok(Navigation::InputSubmit);
+                        }
+                        None => {}
+                    }
+                } else {
+                    self.message_box = "Record not saved".to_string();
                 }
                 Navigation::DoNotihing
             }
