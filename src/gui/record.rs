@@ -116,6 +116,13 @@ impl Track {
             _ => " [".to_string() + &self.duration + "] ",
         };
         let mut tab = Tab::new(vec![TM::Line(position + &duration + &self.title)]);
+        if let Some(artists) = &self.extraartists {
+            let artists_module = TM::Module(Tab::from_strings(
+                artists.iter().map(|a| a.name.clone()).collect(),
+            ));
+            tab.children.push(artists_module);
+            tab.children.push(TM::Line("".to_string()));
+        }
         if let Some(sub_tracks) = &self.sub_tracks {
             sub_tracks
                 .iter()

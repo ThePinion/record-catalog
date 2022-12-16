@@ -68,6 +68,7 @@ impl App<'_> {
 
                 Navigation::DoNotihing
             }
+            KeyCode::Enter => Navigation::InputSubmit,
             _ => Navigation::DoNotihing,
         })
     }

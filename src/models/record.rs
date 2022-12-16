@@ -20,6 +20,7 @@ pub struct Identifier {
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 pub struct Artist {
     pub name: String,
+    pub role: String,
     pub id: i64,
 }
 
@@ -30,6 +31,7 @@ pub struct Track {
     pub title: String,
     pub duration: String,
     pub sub_tracks: Option<Vec<Track>>,
+    pub extraartists: Option<Vec<Artist>>,
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
