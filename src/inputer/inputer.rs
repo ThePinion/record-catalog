@@ -144,7 +144,7 @@ impl App<'_> {
             }
             KeyCode::Enter => match self.select_release_from_web_search() {
                 Ok(r) => {
-                    self.search.selected = Some(r);
+                    self.search_page_set_selected(r);
                     Navigation::Combined(vec![
                         Navigation::NavigatePage(AppPages::Search),
                         Navigation::InputSubmit,
@@ -176,8 +176,9 @@ impl App<'_> {
                 if !self.search.is_saved {
                     match &self.search.selected {
                         Some(r) => {
-                            self.database.add(r.clone());
+                            self.database.add(r.clone())?;
                             self.message_box = "Record Saved".to_string();
+                            return Ok(Navigation::InputSubmit);
                         }
                         None => {}
                     }
