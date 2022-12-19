@@ -179,11 +179,12 @@ impl App<'_> {
                 .iter()
                 .map(|r| {
                     ListItem::new(
-                        r.title.to_owned()
-                            + &r.formats
+                        r.record.title.to_owned()
+                            + &r.record
+                                .formats
                                 .iter()
                                 .fold(" # ".to_string(), |a, f| a + &f.name + " | ")
-                            + &format!("{}", r.id),
+                            + &format!("{}", r.record.id),
                     )
                 })
                 .collect::<Vec<_>>(),
@@ -203,13 +204,14 @@ impl App<'_> {
         let mut detail: Paragraph;
         let title: String;
         if let Some(r) = &self.search.selected {
-            title = match self.database.contains(&r) {
+            title = match self.database.contains(&r.record) {
                 true => " ✅ Record saved",
                 false => " ❌ Record not saved",
             }
             .to_string();
 
             let spans: Vec<_> = r
+                .record
                 .get_lines()
                 .into_iter()
                 .map(|s| Spans::from(vec![Span::raw(""), Span::raw(s)]))

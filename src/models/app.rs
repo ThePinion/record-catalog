@@ -3,8 +3,8 @@ use tui_textarea::TextArea;
 use crate::{database::Database, discogs::DiscogsClient};
 
 use super::{
-    error::Result, list::StatefulList, query::DiscogsSearchResultRelease, record::Record,
-    settings::Settings,
+    error::Result, item_holder::ItemHolder, list::StatefulList, query::DiscogsSearchResultRelease,
+    record::Record, settings::Settings,
 };
 
 use strum::{EnumIter, IntoEnumIterator};
@@ -123,8 +123,8 @@ pub enum Navigation {
 }
 
 pub struct Search {
-    pub list: StatefulList<Record>,
-    pub selected: Option<Record>,
+    pub list: StatefulList<ItemHolder>,
+    pub selected: Option<ItemHolder>,
     pub is_saved: bool,
     pub detail_offset: usize,
 }

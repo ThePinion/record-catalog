@@ -13,7 +13,7 @@ tui = "0.19"
 crossterm = "0.25"
 tui-textarea = "*"
 strum = { version = "0.21", features = ["derive"] }
-
+chrono =  { version = "0.4.23", features = ["serde"] }
 
 
 

@@ -3,7 +3,7 @@ use crossterm::event::KeyCode;
 use crate::models::{
     app::{App, Navigation},
     error::Result,
-    record::Record,
+    item_holder::ItemHolder,
 };
 
 impl App<'_> {
@@ -23,7 +23,7 @@ impl App<'_> {
                 if !self.search.is_saved {
                     match &self.search.selected {
                         Some(r) => {
-                            self.database.add(r.clone())?;
+                            self.database.add(r.record.clone())?;
                             self.search.is_saved = true;
                             self.message_box = "Record Saved".to_string();
                             return Ok(Navigation::InputSubmit);
@@ -39,7 +39,7 @@ impl App<'_> {
                 if self.search.is_saved {
                     match &self.search.selected {
                         Some(r) => {
-                            self.database.remove(r)?;
+                            self.database.remove(&r.record, 0)?;
                             self.search.is_saved = false;
                             self.message_box = "Record Deleted".to_string();
                             return Ok(Navigation::InputSubmit);
@@ -61,7 +61,7 @@ impl App<'_> {
             KeyCode::PageDown => {
                 if let Some(r) = &self.search.selected {
                     let offset = self.search.detail_offset;
-                    if offset < r.get_lines().len() - 1 {
+                    if offset < r.record.get_lines().len() - 1 {
                         self.search.detail_offset += 1;
                     }
                 }
@@ -79,9 +79,9 @@ impl App<'_> {
         }
     }
 
-    pub fn search_page_set_selected(&mut self, record: Record) {
-        self.search.is_saved = self.database.contains(&record);
+    pub fn search_page_set_selected(&mut self, holder: ItemHolder) {
+        self.search.is_saved = self.database.contains(&holder.record);
         self.search.detail_offset = 0;
-        self.search.selected = Some(record);
+        self.search.selected = Some(holder);
     }
 }

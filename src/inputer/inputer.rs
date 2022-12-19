@@ -9,6 +9,7 @@ use crossterm::event::{self, Event, KeyCode};
 use crate::models::{
     app::{App, AppPage, AppPages, Navigation},
     error::Result,
+    item_holder::ItemHolder,
 };
 
 pub enum CustomEvent<I> {
@@ -142,7 +143,7 @@ impl App<'_> {
             }
             KeyCode::Enter => match self.select_release_from_web_search() {
                 Ok(r) => {
-                    self.search_page_set_selected(r);
+                    self.search_page_set_selected(ItemHolder::new(r));
                     Navigation::Combined(vec![
                         Navigation::NavigatePage(AppPages::Search),
                         Navigation::InputSubmit,

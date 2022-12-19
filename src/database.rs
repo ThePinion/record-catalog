@@ -1,10 +1,10 @@
 use std::fs;
 
-use crate::models::{error::Result, record::Record};
+use crate::models::{error::Result, item_holder::ItemHolder, record::Record};
 
 pub struct Database {
     file_path: String,
-    pub data: Vec<Record>,
+    pub data: Vec<ItemHolder>,
 }
 
 impl Database {
@@ -16,10 +16,15 @@ impl Database {
     }
 
     pub fn contains(&self, record: &Record) -> bool {
-        return self.data.contains(record);
+        return self
+            .data
+            .iter()
+            .map(|h| &h.record)
+            .collect::<Vec<_>>()
+            .contains(&record);
     }
 
-    pub fn search(&self, query: &str) -> Vec<Record> {
+    pub fn search(&self, query: &str) -> Vec<ItemHolder> {
         return self
             .data
             .iter()
@@ -38,7 +43,7 @@ impl Database {
         return self
             .data
             .iter()
-            .map(|r| r.id)
+            .map(|r| r.record.id)
             .collect::<Vec<_>>()
             .contains(&id);
     }
@@ -48,29 +53,32 @@ impl Database {
             return Ok(());
         }
 
-        self.data.push(record);
+        self.data.push(ItemHolder::new(record));
 
         self.save()
     }
 
-    #[allow(dead_code)]
-    pub fn remove(&mut self, record: &Record) -> Result<()> {
-        let index = self.data.iter().position(|x| x == record);
-        if let Some(i) = index {
-            self.data.remove(i);
+    pub fn remove(&mut self, record: &Record, item_index: usize) -> Result<()> {
+        let idx = self.data.iter().position(|x| &x.record == record);
 
-            self.save()?;
+        if let Some(index) = idx {
+            let holder = &mut self.data[index];
+            if holder.items.len() > item_index {
+                holder.items.remove(item_index);
+            }
+            if holder.items.is_empty() {
+                self.data.remove(index);
+            }
         }
 
         Ok(())
-
     }
 
-    fn initial_load(file_path: &str) -> Result<Vec<Record>> {
+    fn initial_load(file_path: &str) -> Result<Vec<ItemHolder>> {
         let mut data = vec![];
         if std::path::Path::new(file_path).exists() {
             let data_string = fs::read_to_string(file_path)?;
-            data = serde_json::from_str::<Vec<Record>>(&data_string)?;
+            data = serde_json::from_str::<Vec<ItemHolder>>(&data_string)?;
         } else {
             let data_string = serde_json::to_string(&data)?;
             fs::write(file_path, data_string)?;
