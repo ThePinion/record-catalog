@@ -1,6 +1,10 @@
 use std::fs;
 
-use crate::models::{error::Result, item_holder::ItemHolder, record::Record};
+use crate::models::{
+    error::Result,
+    item_holder::{Item, ItemHolder},
+    record::Record,
+};
 
 pub struct Database {
     file_path: String,
@@ -15,6 +19,7 @@ impl Database {
         })
     }
 
+    #[allow(dead_code)]
     pub fn contains(&self, record: &Record) -> bool {
         return self
             .data
@@ -24,19 +29,32 @@ impl Database {
             .contains(&record);
     }
 
-    pub fn search(&self, query: &str) -> Vec<ItemHolder> {
-        return self
-            .data
-            .iter()
-            .filter(|r| {
-                let json = serde_json::to_string(&r).unwrap().to_ascii_lowercase();
-                return query
-                    .to_ascii_lowercase()
-                    .split_ascii_whitespace()
-                    .all(|q| json.contains(q));
-            })
-            .map(|r| r.clone())
-            .collect();
+    pub fn search(&self, query: &str, item_holder: Option<Record>) -> Vec<ItemHolder> {
+        let results = self.data.iter().filter(|r| {
+            let json = serde_json::to_string(&r).unwrap().to_ascii_lowercase();
+            query
+                .to_ascii_lowercase()
+                .split_ascii_whitespace()
+                .all(|q| json.contains(q))
+        });
+
+        match item_holder {
+            Some(record) => {
+                let mut res: Vec<_> = results
+                    .filter(|ih| ih.record.id != record.id)
+                    .map(|ih| ih.clone())
+                    .collect();
+                res.insert(
+                    0,
+                    self.data
+                        .iter()
+                        .find(|ih| ih.record.id == record.id)
+                        .map_or(ItemHolder::new(record), |ih| ih.clone()),
+                );
+                res
+            }
+            None => results.map(|i| i.clone()).collect(),
+        }
     }
 
     pub fn contains_id(&self, id: i64) -> bool {
@@ -48,17 +66,42 @@ impl Database {
             .contains(&id);
     }
 
-    pub fn add(&mut self, record: Record) -> Result<()> {
-        if self.contains(&record) {
-            return Ok(());
-        }
+    pub fn add(&mut self, record: Record) -> Result<ItemHolder> {
+        let holder = match self
+            .data
+            .iter_mut()
+            .find(move |ih| ih.record.id == record.id)
+        {
+            Some(item_holder) => {
+                item_holder.add_item();
+                item_holder.clone()
+            }
+            None => {
+                let item_holder = ItemHolder::new_with_item(record);
+                self.data.push(item_holder.clone());
+                item_holder
+            }
+        };
 
-        self.data.push(ItemHolder::new(record));
+        self.save()?;
+        Ok(holder)
+    }
 
+    pub fn update_item(&mut self, record: &Record, item: Item) -> Result<()> {
+        let old_item = self
+            .data
+            .iter_mut()
+            .find(|ih| &ih.record == record)
+            .ok_or("No item holder matching the current record")?
+            .items
+            .iter_mut()
+            .find(|i| i.id == item.id)
+            .ok_or("No item holder matching the item id")?;
+        old_item.events = item.events;
         self.save()
     }
 
-    pub fn remove(&mut self, record: &Record, item_index: usize) -> Result<()> {
+    pub fn remove_holder_item(&mut self, record: &Record, item_index: usize) -> Result<()> {
         let idx = self.data.iter().position(|x| &x.record == record);
 
         if let Some(index) = idx {
@@ -66,12 +109,16 @@ impl Database {
             if holder.items.len() > item_index {
                 holder.items.remove(item_index);
             }
-            if holder.items.is_empty() {
-                self.data.remove(index);
-            }
         }
+        self.save()
+    }
 
-        Ok(())
+    pub fn remove_holder(&mut self, record: &Record) -> Result<()> {
+        let idx = self.data.iter().position(|x| &x.record == record);
+        if let Some(index) = idx {
+            self.data.remove(index);
+        }
+        self.save()
     }
 
     fn initial_load(file_path: &str) -> Result<Vec<ItemHolder>> {

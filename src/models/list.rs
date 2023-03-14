@@ -54,4 +54,27 @@ impl<T> StatefulList<T> {
     pub fn unselect(&mut self) {
         self.state.select(None);
     }
+
+    pub fn selected_mut(&mut self) -> Option<&mut T> {
+        self.state
+            .selected()
+            .map_or(None, |index| Some(&mut self.items[index]))
+    }
+
+    pub fn selected(&self) -> Option<&T> {
+        self.state
+            .selected()
+            .map_or(None, |index| Some(&self.items[index]))
+    }
+
+    pub fn update_selected(&mut self, item: T) {
+        if let Some(index) = self.state.selected() {
+            self.items[index] = item;
+        }
+    }
+
+    pub fn remove_at_index(&mut self, index: usize) {
+        self.items.remove(index);
+        self.previous();
+    }
 }

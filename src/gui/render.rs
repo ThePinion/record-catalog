@@ -1,4 +1,9 @@
-use crate::models::app::{AppPage, AppPages};
+use crate::models::{
+    app::{AppPage, AppPages},
+    item_holder::StatefulItem,
+    list::StatefulList,
+    record::Record,
+};
 
 use super::super::models::error::Result;
 use std::io::Stdout;
@@ -80,7 +85,7 @@ impl App<'_> {
 
             self.main_input.set_cursor_line_style(Style::default());
 
-            let border_style = match self.input {
+            let border_style = match self.is_main_input {
                 true => Style::default()
                     .remove_modifier(Modifier::UNDERLINED)
                     .fg(Color::Yellow),
@@ -169,22 +174,77 @@ impl App<'_> {
     fn render_search_page(&mut self, rect: &mut Frame<CrosstermBackend<Stdout>>, area: Rect) {
         let chunks = Layout::default()
             .direction(Direction::Horizontal)
-            .constraints([Constraint::Percentage(40), Constraint::Percentage(60)].as_ref())
+            .constraints(self.get_layout_chunks().as_ref())
             .split(area);
 
+        self.render_search_list(rect, chunks[0]);
+        if let Some(item_holder) = self.search.list.selected_mut() {
+            Self::render_item_holder_items_list(&mut item_holder.list, rect, chunks[1]);
+            match item_holder.list.selected_mut() {
+                Some(item) => {
+                    let border_style = match self.is_side_input {
+                        true => Style::default()
+                            .remove_modifier(Modifier::UNDERLINED)
+                            .fg(Color::Yellow),
+                        false => Style::default(),
+                    };
+                    self.side_input.set_block(
+                        Block::default()
+                            .title("Message")
+                            .borders(Borders::ALL)
+                            .border_style(border_style),
+                    );
+                    let small_chunks = Layout::default()
+                        .direction(Direction::Vertical)
+                        .constraints([Constraint::Min(4), Constraint::Length(3)].as_ref())
+                        .split(chunks[2]);
+                    rect.render_widget(self.side_input.widget(), small_chunks[1]);
+                    Self::render_item_detail(&item.clone(), rect, small_chunks[0])
+                }
+                None => Self::render_record_detail(
+                    &item_holder.record,
+                    item_holder.detail_offset,
+                    rect,
+                    chunks[2],
+                ),
+            }
+        }
+    }
+
+    fn get_layout_chunks(&mut self) -> [Constraint; 3] {
+        match self
+            .search
+            .list
+            .selected_mut()
+            .map_or(None, |ih| ih.list.selected())
+        {
+            Some(_) => [
+                Constraint::Percentage(25),
+                Constraint::Percentage(30),
+                Constraint::Percentage(40),
+            ],
+            None => [
+                Constraint::Percentage(35),
+                Constraint::Percentage(0),
+                Constraint::Percentage(65),
+            ],
+        }
+    }
+
+    fn render_search_list(&mut self, rect: &mut Frame<CrosstermBackend<Stdout>>, area: Rect) {
         let query_list = List::new(
             self.search
                 .list
                 .items
                 .iter()
+                .map(|ih| ih.record.clone())
                 .map(|r| {
                     ListItem::new(
-                        r.record.title.to_owned()
-                            + &r.record
-                                .formats
+                        r.title.to_owned()
+                            + &r.formats
                                 .iter()
                                 .fold(" # ".to_string(), |a, f| a + &f.name + " | ")
-                            + &format!("{}", r.record.id),
+                            + &format!("{}", r.id),
                     )
                 })
                 .collect::<Vec<_>>(),
@@ -195,44 +255,75 @@ impl App<'_> {
                 .bg(Color::DarkGray)
                 .add_modifier(Modifier::BOLD),
         );
-
-        rect.render_stateful_widget(query_list, chunks[0], &mut self.search.list.state);
-        self.render_record_detail(rect, chunks[1]);
+        rect.render_stateful_widget(query_list, area, &mut self.search.list.state);
     }
 
-    fn render_record_detail(&mut self, rect: &mut Frame<CrosstermBackend<Stdout>>, area: Rect) {
-        let mut detail: Paragraph;
-        let title: String;
-        if let Some(r) = &self.search.selected {
-            title = match self.database.contains(&r.record) {
-                true => " ✅ Record saved",
-                false => " ❌ Record not saved",
-            }
-            .to_string();
+    fn render_record_detail(
+        record: &Record,
+        detail_offset: usize,
+        rect: &mut Frame<CrosstermBackend<Stdout>>,
+        area: Rect,
+    ) {
+        let spans: Vec<_> = record
+            .get_lines()
+            .into_iter()
+            .map(|s| Spans::from(vec![Span::raw(""), Span::raw(s)]))
+            .collect::<Vec<_>>()[detail_offset..]
+            .into();
 
-            let spans: Vec<_> = r
-                .record
-                .get_lines()
-                .into_iter()
-                .map(|s| Spans::from(vec![Span::raw(""), Span::raw(s)]))
-                .collect::<Vec<_>>()[self.search.detail_offset..]
-                .into();
-
-            detail = Paragraph::new(spans).wrap(Wrap { trim: false })
-        } else {
-            title = "".to_string();
-            detail = Paragraph::new("No record selected".to_string());
-        };
-
-        detail = detail.block(
+        let detail = Paragraph::new(spans).wrap(Wrap { trim: false }).block(
             Block::default()
                 .borders(Borders::ALL)
                 .style(Style::default().fg(Color::White))
-                .title(title)
+                .title("Record")
                 .border_type(BorderType::Plain),
         );
 
         rect.render_widget(detail, area);
+    }
+
+    fn render_item_detail(
+        stateful_item: &StatefulItem,
+        rect: &mut Frame<CrosstermBackend<Stdout>>,
+        area: Rect,
+    ) {
+        let spans: Vec<_> = stateful_item
+            .item
+            .events
+            .iter()
+            .map(|ie| Spans::from(vec![Span::raw("\n    "), Span::raw(format!("{:#?}", ie))]))
+            .collect::<Vec<_>>()
+            .into();
+
+        let detail = Paragraph::new(spans).wrap(Wrap { trim: false }).block(
+            Block::default()
+                .borders(Borders::ALL)
+                .style(Style::default().fg(Color::White))
+                .title("Item events")
+                .border_type(BorderType::Plain),
+        );
+        rect.render_widget(detail, area);
+    }
+
+    fn render_item_holder_items_list(
+        item_holder_list: &mut StatefulList<StatefulItem>,
+        rect: &mut Frame<CrosstermBackend<Stdout>>,
+        area: Rect,
+    ) {
+        let list = List::new(
+            item_holder_list
+                .items
+                .iter()
+                .map(|i| ListItem::new(format!("{}", i.item.id)))
+                .collect::<Vec<_>>(),
+        )
+        .block(Block::default().borders(Borders::ALL).title("List"))
+        .highlight_style(
+            Style::default()
+                .bg(Color::DarkGray)
+                .add_modifier(Modifier::BOLD),
+        );
+        rect.render_stateful_widget(list, area, &mut item_holder_list.state);
     }
 
     fn render_message(&mut self, rect: &mut Frame<CrosstermBackend<Stdout>>, area: Rect) {

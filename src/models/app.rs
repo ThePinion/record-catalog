@@ -3,8 +3,12 @@ use tui_textarea::TextArea;
 use crate::{database::Database, discogs::DiscogsClient};
 
 use super::{
-    error::Result, item_holder::ItemHolder, list::StatefulList, query::DiscogsSearchResultRelease,
-    record::Record, settings::Settings,
+    error::Result,
+    item_holder::{StatefulItem, StatefulItemHolder},
+    list::StatefulList,
+    query::DiscogsSearchResultRelease,
+    record::Record,
+    settings::Settings,
 };
 
 use strum::{EnumIter, IntoEnumIterator};
@@ -51,10 +55,12 @@ impl AppPage for AppPages {
 pub struct App<'a> {
     pub active: AppPages,
     pub pages: Vec<AppPages>,
-    pub input: bool,
+    pub is_main_input: bool,
+    pub main_input: TextArea<'a>,
+    pub is_side_input: bool,
+    pub side_input: TextArea<'a>,
     pub database: Database,
     pub discogs_client: DiscogsClient,
-    pub main_input: TextArea<'a>,
     pub message_box: String,
     pub query_results: StatefulList<DiscogsSearchResultRelease>,
     pub search: Search,
@@ -64,18 +70,16 @@ impl App<'_> {
     pub fn new(settings: Settings) -> Result<Self> {
         let discogs_client: DiscogsClient = DiscogsClient::new(&settings.discogs_key);
 
-        let search_results = vec![];
-
-        let input = TextArea::default();
-
         Ok(App {
             pages: AppPages::iter().collect::<Vec<_>>(),
             active: AppPages::Home,
-            input: false,
             database: Database::new(&settings.database_path)?,
             discogs_client: discogs_client,
-            main_input: input,
-            query_results: StatefulList::with_items(search_results),
+            is_main_input: false,
+            main_input: TextArea::default(),
+            is_side_input: false,
+            side_input: TextArea::default(),
+            query_results: StatefulList::with_items(vec![]),
             message_box: "".to_string(),
             search: Search::empty(),
         })
@@ -89,11 +93,13 @@ impl App<'_> {
         return Ok(());
     }
 
-    pub fn search(&mut self) -> Result<()> {
+    pub fn search(&mut self, item_holder: Option<Record>) -> Result<()> {
         let query = &self.main_input.lines()[0];
-        let results = self.database.search(query);
+        let results = self.database.search(query, item_holder);
         self.message_box = format!("Found {} results", results.len());
-        self.search.list = StatefulList::with_items(results);
+        self.search.list =
+            StatefulList::with_items(results.into_iter().map(|ih| ih.to_stateful()).collect());
+        self.search.list.next();
         return Ok(());
     }
 
@@ -117,26 +123,41 @@ pub enum Navigation {
     InputSubmit,
     DoNotihing,
     QuitInput,
+    QuitSideInput,
     EnterInput,
+    EnterSideInput,
+    SideInputSubmit,
     Quit,
     Combined(Vec<Navigation>),
 }
 
 pub struct Search {
-    pub list: StatefulList<ItemHolder>,
-    pub selected: Option<ItemHolder>,
-    pub is_saved: bool,
-    pub detail_offset: usize,
+    pub list: StatefulList<StatefulItemHolder>,
 }
 
 impl Search {
     pub fn empty() -> Self {
         Search {
             list: StatefulList::with_items(vec![]),
-            selected: None,
-            is_saved: true,
-            detail_offset: 0,
         }
+    }
+
+    pub fn get_selected_item_holder_mut(&mut self) -> Option<&mut StatefulItemHolder> {
+        self.list.selected_mut()
+    }
+
+    pub fn get_selected_item_holder(&self) -> Option<&StatefulItemHolder> {
+        self.list.selected()
+    }
+
+    pub fn get_selected_item_mut(&mut self) -> Option<&mut StatefulItem> {
+        self.get_selected_item_holder_mut()
+            .map_or(None, |ih| ih.list.selected_mut())
+            .map_or(None, |i| Some(i))
+    }
+
+    pub fn is_item_selected(&mut self) -> bool {
+        self.get_selected_item_mut().is_some()
     }
 }
 

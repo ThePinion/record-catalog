@@ -9,7 +9,7 @@ use crossterm::event::{self, Event, KeyCode};
 use crate::models::{
     app::{App, AppPage, AppPages, Navigation},
     error::Result,
-    item_holder::ItemHolder,
+    item_holder::ItemEvent,
 };
 
 pub enum CustomEvent<I> {
@@ -62,14 +62,35 @@ impl App<'_> {
             }
             Navigation::EnterInput => {
                 if self.active.show_input() {
-                    self.input = true;
+                    self.is_main_input = true;
                 }
             }
-            Navigation::QuitInput => self.input = false,
+            Navigation::EnterSideInput => {
+                if self.search.is_item_selected() {
+                    self.is_side_input = true
+                }
+            }
+            Navigation::QuitInput => self.is_main_input = false,
+            Navigation::QuitSideInput => self.is_side_input = false,
             Navigation::Quit => return Ok(true),
             Navigation::InputSubmit => match self.active {
-                AppPages::Search => self.search()?,
+                AppPages::Search => self.search(None)?,
                 AppPages::WebSearch => self.web_search()?,
+                _ => {}
+            },
+            Navigation::SideInputSubmit => match self.active {
+                AppPages::Search => {
+                    if let Some(holder) = self.search.list.selected_mut() {
+                        if let Some(stateful_item) = holder.list.selected_mut() {
+                            stateful_item.item.events.push(ItemEvent::with_message(
+                                stateful_item.clone().input.unwrap(),
+                                self.side_input.lines()[0].clone(),
+                            ));
+                            self.database
+                                .update_item(&holder.record, stateful_item.item.clone())?;
+                        }
+                    }
+                }
                 _ => {}
             },
             Navigation::Combined(vector) => {
@@ -79,14 +100,14 @@ impl App<'_> {
                     .collect();
                 return Ok(results.contains(&true));
             }
-            _ => {}
+            Navigation::DoNotihing => {}
         }
 
         Ok(false)
     }
 
     fn handle_input(&mut self, event: CustomEvent<event::KeyEvent>) -> Result<Navigation> {
-        if self.input {
+        if self.is_main_input {
             match event {
                 CustomEvent::Input(key_event) => match key_event.code {
                     KeyCode::Esc => return Ok(Navigation::QuitInput),
@@ -98,6 +119,26 @@ impl App<'_> {
                     }
                     _ => {
                         self.main_input.input(key_event);
+                    }
+                },
+                _ => {}
+            };
+
+            return Ok(Navigation::DoNotihing);
+        };
+
+        if self.is_side_input {
+            match event {
+                CustomEvent::Input(key_event) => match key_event.code {
+                    KeyCode::Esc => return Ok(Navigation::QuitSideInput),
+                    KeyCode::Enter => {
+                        return Ok(Navigation::Combined(vec![
+                            Navigation::QuitSideInput,
+                            Navigation::SideInputSubmit,
+                        ]))
+                    }
+                    _ => {
+                        self.side_input.input(key_event);
                     }
                 },
                 _ => {}
@@ -143,10 +184,10 @@ impl App<'_> {
             }
             KeyCode::Enter => match self.select_release_from_web_search() {
                 Ok(r) => {
-                    self.search_page_set_selected(ItemHolder::new(r));
+                    self.search(Some(r))?;
                     Navigation::Combined(vec![
                         Navigation::NavigatePage(AppPages::Search),
-                        Navigation::InputSubmit,
+                        // Navigation::InputSubmit,
                     ])
                 }
                 Err(_) => {
